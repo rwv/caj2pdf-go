@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/rwv/caj2pdf-go/parser"
+)
 
 func main() {
-	fmt.Println("Hello, World!")
+	parser := parser.New("temp/1.caj")
+	fmt.Println(parser)
 }

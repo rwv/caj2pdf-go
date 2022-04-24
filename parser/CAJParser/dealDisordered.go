@@ -37,7 +37,7 @@ func dealDisordered(reader io.ReadSeeker) []int64 {
 	return obj_no
 }
 
-func contains(s []int64, e int64) bool {
+func contains[K comparable](s []K, e K) bool {
 	for _, a := range s {
 		if a == e {
 			return true

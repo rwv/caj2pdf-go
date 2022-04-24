@@ -2,9 +2,9 @@ package CAJParser
 
 import (
 	"bytes"
-	"crypto/md5"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -71,6 +71,19 @@ func handlePages(pdfData []byte, parser *CAJParser) ([]byte, error) {
 
 	pdfData = append(pdfData, catalog...)
 
+	pdfData = addPagesObjAndEOFMark(pdfData, single_pages_obj_missed, multi_pages_obj_missed, top_pages_obj_no, root_pages_obj_no, parser.pageNum)
+
+	return pdfData, nil
+}
+
+func addPagesObjAndEOFMark(
+	pdfData []byte,
+	single_pages_obj_missed bool,
+	multi_pages_obj_missed bool,
+	top_pages_obj_no []int64,
+	root_pages_obj_no int64,
+	pageNum int32,
+) []byte {
 	// Add Pages obj and EOF mark
 	// if root pages object exist, pass
 	// deal with single missing pages object
@@ -82,14 +95,85 @@ func handlePages(pdfData []byte, parser *CAJParser) ([]byte, error) {
 
 		kids_str := "[" + strings.Join(inds_str, " ") + "]"
 
-		pages_str := fmt.Sprintf("%d 0 obj\r<<\r/Type /Pages\r/Kids %s\r/Count %d\r>>\rendobj\r", root_pages_obj_no, kids_str, *&parser.pageNum)
+		pages_str := fmt.Sprintf("%d 0 obj\r<<\r/Type /Pages\r/Kids %s\r/Count %d\r>>\rendobj\r", root_pages_obj_no, kids_str, pageNum)
 
 		pdfData = append(pdfData, []byte(pages_str)...)
 	}
 
-	// print md5
-	md5 := fmt.Sprintf("%x", md5.Sum(pdfData))
-	fmt.Println("md5:", md5)
+	// deal with multiple missing pages objects
+	if multi_pages_obj_missed {
+		kids_dict := make(map[int64][]int64)
+		for _, i := range top_pages_obj_no {
+			kids_dict[i] = []int64{}
+		}
 
-	return pdfData, nil
+		count_dict := make(map[int64]int64)
+		for _, i := range top_pages_obj_no {
+			count_dict[i] = 0
+		}
+
+		reader := bytes.NewReader(pdfData)
+
+		for _, tpon := range top_pages_obj_no {
+			kids_addr := findAllOccurances(reader, []byte(fmt.Sprintf("/Parent %d 0 R", tpon)))
+			for _, kid := range kids_addr {
+				ind := findReverse(reader, []byte("obj"), kid) - 4
+				addr := findReverse(reader, []byte("\r"), ind)
+				length := find(reader, []byte(" "), addr) - addr
+				reader.Seek(addr, io.SeekStart)
+				indStrSlice := make([]byte, length)
+				reader.Read(indStrSlice)
+				indStr := string(indStrSlice)
+				ind_, _ := strconv.Atoi(indStr)
+				ind = int64(ind_)
+				kids_dict[tpon] = append(kids_dict[tpon], ind)
+
+				type_addr := find(reader, []byte("/Type"), addr) + 5
+				tmp_addr := find(reader, []byte("/"), type_addr) + 1
+
+				reader.Seek(tmp_addr, io.SeekStart)
+
+				typeStrSlice := make([]byte, 5)
+				reader.Read(typeStrSlice)
+				typeStr := string(typeStrSlice)
+				if typeStr == "Pages" {
+					cnt_addr := find(reader, []byte("/Count "), addr) + 7
+					reader.Seek(cnt_addr, io.SeekStart)
+
+					_strSlice := make([]byte, 1)
+					reader.Read(_strSlice)
+					var cnt_len int64 = 0
+
+					for !contains([]byte{' ', '\r', '/'}, _strSlice[0]) {
+						cnt_len += 1
+						reader.Seek(cnt_addr+cnt_len, io.SeekStart)
+						reader.Read(_strSlice)
+					}
+
+					reader.Seek(cnt_addr, io.SeekStart)
+					cntSlice := make([]byte, cnt_len)
+					reader.Read(cntSlice)
+					ind_, _ := strconv.Atoi(string(cntSlice))
+					ind = int64(ind_)
+					count_dict[tpon] += ind
+				} else { // _type == b"Page"
+					count_dict[tpon] += 1
+				}
+			}
+			kids_no_str := make([]string, len(kids_dict[tpon]))
+
+			for idx, i := range kids_dict[tpon] {
+				kids_no_str[idx] = fmt.Sprintf("%d 0 R", i)
+			}
+
+			kids_str := "[" + strings.Join(kids_no_str, " ") + "]"
+			pages_str := fmt.Sprintf("%d 0 obj\r<<\r/Type /Pages\r/Kids %s\r/Count %d\r>>\rendobj\r", tpon, kids_str, count_dict[tpon])
+			pdfData = append(pdfData, []byte(pages_str)...)
+		}
+	}
+
+	// add EOF mark
+	pdfData = append(pdfData, []byte("\n%%EOF\r")...)
+
+	return pdfData
 }

@@ -2,8 +2,6 @@ package CAJParser
 
 import (
 	"bytes"
-	"encoding/binary"
-	"fmt"
 	"io"
 	"os"
 )
@@ -28,63 +26,14 @@ func (parser CAJParser) Convert(target string) error {
 	}
 	defer file.Close()
 
-	var startOffset int64 = caj_PAGE_NUMBER_OFFSET + 4
-	file.Seek(startOffset, io.SeekStart)
+	extractedReader, err := extractData(file)
 
-	// Seek to PDF start pointer
-	var pdfStartPointerSlice []byte = make([]byte, 4)
-
-	_, err = file.Read(pdfStartPointerSlice)
-	if err != nil {
-		return err
-	}
-
-	pdfStartPointer := int64(int32(binary.LittleEndian.Uint32(pdfStartPointerSlice)))
-	file.Seek(pdfStartPointer, io.SeekStart)
-
-	var pdf_start []byte = make([]byte, 4)
-	_, err = file.Read(pdf_start)
-	if err != nil {
-		return err
-	}
-
-	pdf_start_value := int64(binary.LittleEndian.Uint32(pdf_start))
-
-	endPattern := []byte("endobj")
-	occurances := findAllOccurances(file, endPattern)
-	pdf_end := occurances[len(occurances)-1] + 6
-
-	pdfLength := pdf_end - pdf_start_value
-
-	file.Seek(pdf_start_value, io.SeekStart)
-
-	pdfHeader := []byte("%PDF-1.3\r\n")
-	pdfBody := make([]byte, pdfLength)
-
-	_, err = file.Read(pdfBody)
-	if err != nil {
-		return err
-	}
-	pdfFooter := []byte("\r\n")
-
-	// Concat
-	pdfData := append(pdfHeader, pdfBody...)
-	pdfData = append(pdfData, pdfFooter...)
-
-	// Write to file
-	fmt.Println("Writing to file...")
-	out, err := os.Create("pdf.tmp")
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = out.Write(pdfData)
+	dealDisordered(extractedReader)
 
 	return nil
 }
 
-func findAllOccurances(file *os.File, pattern []byte) []int64 {
+func findAllOccurances(file io.ReadSeeker, pattern []byte) []int64 {
 	var results []int64
 	var last_address int64 = int64(-len(pattern))
 
@@ -99,7 +48,7 @@ func findAllOccurances(file *os.File, pattern []byte) []int64 {
 	}
 }
 
-func find(file *os.File, pattern []byte, start int64) int64 {
+func find(file io.ReadSeeker, pattern []byte, start int64) int64 {
 	patternLen := len(pattern)
 	fsize, _ := file.Seek(0, io.SeekEnd)
 	file.Seek(0, io.SeekStart)

@@ -1,4 +1,4 @@
-package parser
+package CAJParser
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ type CAJParser struct {
 	filePath string
 }
 
-func NewCAJParser(filePath string) CAJParser {
+func New(filePath string) CAJParser {
 	return CAJParser{
 		filePath: filePath,
 	}

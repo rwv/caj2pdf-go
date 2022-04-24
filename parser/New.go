@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/rwv/caj2pdf-go/parser/CAJParser"
 )
 
 func New(filePath string) (Parser, error) {
@@ -18,7 +20,7 @@ func New(filePath string) (Parser, error) {
 	case PDF:
 		return NewPDFParser(filePath), nil
 	case CAJ:
-		return NewCAJParser(filePath), nil
+		return CAJParser.New(filePath), nil
 	}
 	return nil, fmt.Errorf("Unknown file type")
 }

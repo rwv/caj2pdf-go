@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	parser := parser.New("temp/1.caj")
+	parser, _ := parser.New("temp/1.caj")
 	fmt.Println(parser)
 }

@@ -28,5 +28,7 @@ func (parser CAJParser) Convert(target string) error {
 
 	dealDisordered(extractedReader)
 
+	addCatalog(extractedReader)
+
 	return nil
 }

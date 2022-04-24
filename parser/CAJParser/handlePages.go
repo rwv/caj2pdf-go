@@ -8,7 +8,7 @@ import (
 
 // get pages_obj_no list containing distinct elements
 // & find missing pages object(s) -- top pages object(s) in pages_obj_no
-func handlePages(pdfData []byte) []byte {
+func handlePages(pdfData []byte) ([]byte, error) {
 	reader := bytes.NewReader(pdfData)
 
 	obj_no := dealDisordered(reader)
@@ -69,5 +69,5 @@ func handlePages(pdfData []byte) []byte {
 
 	pdfData = append(pdfData, catalog...)
 
-	return pdfData
+	return pdfData, nil
 }

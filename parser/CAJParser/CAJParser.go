@@ -24,9 +24,9 @@ func (parser CAJParser) Convert(target string) error {
 	}
 	defer file.Close()
 
-	extractedData, err := extractData(file)
+	pdfData, err := extractData(file)
 
-	handlePages(extractedData)
+	pdfData, err = handlePages(pdfData)
 
 	return nil
 }

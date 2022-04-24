@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func dealDisordered(reader io.ReadSeeker) {
+func dealDisordered(reader io.ReadSeeker) []int64 {
 	endobjSlice := findAllOccurances(reader, []byte("endobj"))
 	obj_no := []int64{}
 
@@ -33,6 +33,8 @@ func dealDisordered(reader io.ReadSeeker) {
 			// [obj] = struct.unpack(str(obj_len) + "s", pdf.read(obj_len)) // from original caj2pdf
 		}
 	}
+
+	return obj_no
 }
 
 func contains(s []int64, e int64) bool {

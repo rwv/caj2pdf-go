@@ -38,5 +38,19 @@ func (parser CAJParser) Convert(target string) error {
 
 	pdfData, err = handlePages(pdfData, &parser)
 
+	// write pdfData to File
+	file, err = os.CreateTemp("", "caj2pdf")
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = file.Write(pdfData)
+	if err != nil {
+		panic(err)
+	}
+	file.Close()
+
+	repairXref(file.Name(), target)
+
 	return nil
 }

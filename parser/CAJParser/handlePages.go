@@ -19,7 +19,7 @@ func handlePages(pdfData []byte) ([]byte, error) {
 
 	for _, ind := range inds {
 		if !contains(pages_obj_no, ind) && !contains(top_pages_obj_no, ind) {
-			if find(reader, []byte(fmt.Sprintf("\r%d 0 obj", ind)), 0) != -1 {
+			if find(reader, []byte(fmt.Sprintf("\r%d 0 obj", ind)), 0) == -1 {
 				top_pages_obj_no = append(top_pages_obj_no, ind)
 			} else {
 				pages_obj_no = append(pages_obj_no, ind)

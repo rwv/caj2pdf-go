@@ -2,13 +2,15 @@ package CAJParser
 
 import (
 	"bytes"
+	"crypto/md5"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // get pages_obj_no list containing distinct elements
 // & find missing pages object(s) -- top pages object(s) in pages_obj_no
-func handlePages(pdfData []byte) ([]byte, error) {
+func handlePages(pdfData []byte, parser *CAJParser) ([]byte, error) {
 	reader := bytes.NewReader(pdfData)
 
 	obj_no := dealDisordered(reader)
@@ -68,6 +70,26 @@ func handlePages(pdfData []byte) ([]byte, error) {
 	catalog := []byte(fmt.Sprintf("%d 0 obj\r<</Type /Catalog\r/Pages %d 0 R\r>>\rendobj\r", catalog_obj_no, root_pages_obj_no))
 
 	pdfData = append(pdfData, catalog...)
+
+	// Add Pages obj and EOF mark
+	// if root pages object exist, pass
+	// deal with single missing pages object
+	if single_pages_obj_missed || multi_pages_obj_missed {
+		inds_str := make([]string, len(top_pages_obj_no))
+		for idx, i := range top_pages_obj_no {
+			inds_str[idx] = fmt.Sprintf("%d 0 R", i)
+		}
+
+		kids_str := "[" + strings.Join(inds_str, " ") + "]"
+
+		pages_str := fmt.Sprintf("%d 0 obj\r<<\r/Type /Pages\r/Kids %s\r/Count %d\r>>\rendobj\r", root_pages_obj_no, kids_str, *&parser.pageNum)
+
+		pdfData = append(pdfData, []byte(pages_str)...)
+	}
+
+	// print md5
+	md5 := fmt.Sprintf("%x", md5.Sum(pdfData))
+	fmt.Println("md5:", md5)
 
 	return pdfData, nil
 }

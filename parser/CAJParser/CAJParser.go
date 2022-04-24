@@ -9,12 +9,22 @@ const caj_TOC_NUMBER_OFFSET = 0x110
 
 type CAJParser struct {
 	filePath string
+	pageNum  int32
 }
 
 func New(filePath string) CAJParser {
-	return CAJParser{
+	parser := CAJParser{
 		filePath: filePath,
 	}
+
+	file, err := os.Open(parser.filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	parser.pageNum = getPageNum(file)
+	return parser
 }
 
 func (parser CAJParser) Convert(target string) error {
@@ -26,7 +36,7 @@ func (parser CAJParser) Convert(target string) error {
 
 	pdfData, err := extractData(file)
 
-	pdfData, err = handlePages(pdfData)
+	pdfData, err = handlePages(pdfData, &parser)
 
 	return nil
 }

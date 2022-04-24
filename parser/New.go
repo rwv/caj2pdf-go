@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -30,10 +29,9 @@ func detectType(filePath string) (ParserType, error) {
 		panic(err)
 	}
 	defer fi.Close()
-	r := bufio.NewReader(fi)
 
-	var head []byte
-	head, err = r.Peek(4)
+	var head []byte = make([]byte, 4)
+	_, err = fi.Read(head)
 	if err != nil {
 		return Unknown, err
 	}
@@ -45,8 +43,8 @@ func detectType(filePath string) (ParserType, error) {
 
 	// Check HN
 	if string(head[:2]) == "HN" {
-		var head2 []byte
-		head2, err = r.Peek(2)
+		var head2 []byte = make([]byte, 2)
+		_, err = fi.Read(head2)
 		if err != nil {
 			return Unknown, err
 		}

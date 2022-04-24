@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
-	parser, _ := parser.New("temp/1.caj")
+	parser := parser.NewCAJParser("temp/5.caj")
+	parser.Convert("/tmp/5.pdf")
 	fmt.Println(parser)
 }

@@ -24,11 +24,9 @@ func (parser CAJParser) Convert(target string) error {
 	}
 	defer file.Close()
 
-	extractedReader, err := extractData(file)
+	extractedData, err := extractData(file)
 
-	dealDisordered(extractedReader)
-
-	addCatalog(extractedReader)
+	handlePages(extractedData)
 
 	return nil
 }

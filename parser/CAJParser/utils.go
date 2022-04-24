@@ -118,3 +118,20 @@ func findReverse(file io.ReadSeeker, pattern []byte, end int64) int64 {
 	}
 
 }
+
+func findUnusedNo(numberList []int64, numberList2 []int64) int64 {
+	var unuse_no int64 = -1
+
+	// for loop 10000
+	const maxTimes = 99999
+	for i := int64(0); i < maxTimes; i++ {
+		if !contains(numberList, i) && !contains(numberList2, i) {
+			unuse_no = i
+			break
+		}
+	}
+	if unuse_no == -1 {
+		panic("Error on PDF objects numbering.")
+	}
+	return unuse_no
+}

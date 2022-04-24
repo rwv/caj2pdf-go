@@ -1,12 +1,11 @@
 package CAJParser
 
 import (
-	"bytes"
 	"encoding/binary"
 	"io"
 )
 
-func extractData(file io.ReadSeeker) (*bytes.Reader, error) {
+func extractData(file io.ReadSeeker) ([]byte, error) {
 	var err error
 
 	var startOffset int64 = caj_PAGE_NUMBER_OFFSET + 4
@@ -52,5 +51,5 @@ func extractData(file io.ReadSeeker) (*bytes.Reader, error) {
 	pdfData := append(pdfHeader, pdfBody...)
 	pdfData = append(pdfData, pdfFooter...)
 
-	return bytes.NewReader(pdfData), nil
+	return pdfData, nil
 }

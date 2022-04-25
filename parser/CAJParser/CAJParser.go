@@ -1,6 +1,7 @@
 package CAJParser
 
 import (
+	"bytes"
 	"os"
 )
 
@@ -35,7 +36,7 @@ func (parser CAJParser) Convert(target string) error {
 
 	pdfData, err := extractData(file)
 
-	pdfData, err = handlePages(pdfData, &parser)
+	pdfData, err = handlePages(bytes.NewReader(pdfData), &parser)
 
 	// write pdfData to File
 	file, err = os.CreateTemp("", "caj2pdf")

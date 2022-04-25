@@ -10,8 +10,8 @@ import (
 
 // get pages_obj_no list containing distinct elements
 // & find missing pages object(s) -- top pages object(s) in pages_obj_no
-func handlePages(pdfData []byte, parser *CAJParser) ([]byte, error) {
-	reader := bytes.NewReader(pdfData)
+func handlePages(reader io.ReadSeeker, parser *CAJParser) ([]byte, error) {
+	pdfData, _ := io.ReadAll(reader)
 
 	obj_no := dealDisordered(reader)
 	inds := addCatalog(reader)

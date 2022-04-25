@@ -40,7 +40,11 @@ func (parser CAJParser) Convert(target string) error {
 
 	extractedReader := bytes.NewReader(writer.Bytes())
 
-	pdfData, err := handlePages(extractedReader, &parser)
+	handledWriter := bytes.NewBuffer([]byte{})
+
+	_ = handlePages(extractedReader, handledWriter, &parser)
+
+	pdfData := handledWriter.Bytes()
 
 	// write pdfData to File
 	file, err = os.CreateTemp("", "caj2pdf")

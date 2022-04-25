@@ -1,7 +1,6 @@
 package CAJParser
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -10,7 +9,7 @@ import (
 
 // get pages_obj_no list containing distinct elements
 // & find missing pages object(s) -- top pages object(s) in pages_obj_no
-func handlePages(reader io.ReadSeeker, parser *CAJParser) ([]byte, error) {
+func handlePages(reader io.ReadSeeker, writer io.Writer, parser *CAJParser) error {
 	pdfData, _ := io.ReadAll(reader)
 
 	obj_no := dealDisordered(reader)
@@ -69,21 +68,23 @@ func handlePages(reader io.ReadSeeker, parser *CAJParser) ([]byte, error) {
 
 	catalog := []byte(fmt.Sprintf("%d 0 obj\r<</Type /Catalog\r/Pages %d 0 R\r>>\rendobj\r", catalog_obj_no, root_pages_obj_no))
 
-	pdfData = append(pdfData, catalog...)
+	writer.Write(pdfData)
+	writer.Write(catalog)
 
-	pdfData = addPagesObjAndEOFMark(pdfData, single_pages_obj_missed, multi_pages_obj_missed, top_pages_obj_no, root_pages_obj_no, parser.pageNum)
+	_ = addPagesObjAndEOFMark(reader, writer, single_pages_obj_missed, multi_pages_obj_missed, top_pages_obj_no, root_pages_obj_no, parser.pageNum)
 
-	return pdfData, nil
+	return nil
 }
 
 func addPagesObjAndEOFMark(
-	pdfData []byte,
+	reader io.ReadSeeker,
+	writer io.Writer,
 	single_pages_obj_missed bool,
 	multi_pages_obj_missed bool,
 	top_pages_obj_no []int64,
 	root_pages_obj_no int64,
 	pageNum int32,
-) []byte {
+) error {
 	// Add Pages obj and EOF mark
 	// if root pages object exist, pass
 	// deal with single missing pages object
@@ -97,7 +98,7 @@ func addPagesObjAndEOFMark(
 
 		pages_str := fmt.Sprintf("%d 0 obj\r<<\r/Type /Pages\r/Kids %s\r/Count %d\r>>\rendobj\r", root_pages_obj_no, kids_str, pageNum)
 
-		pdfData = append(pdfData, []byte(pages_str)...)
+		writer.Write([]byte(pages_str))
 	}
 
 	// deal with multiple missing pages objects
@@ -111,8 +112,6 @@ func addPagesObjAndEOFMark(
 		for _, i := range top_pages_obj_no {
 			count_dict[i] = 0
 		}
-
-		reader := bytes.NewReader(pdfData)
 
 		for _, tpon := range top_pages_obj_no {
 			kids_addr := findAllOccurances(reader, []byte(fmt.Sprintf("/Parent %d 0 R", tpon)))
@@ -168,12 +167,13 @@ func addPagesObjAndEOFMark(
 
 			kids_str := "[" + strings.Join(kids_no_str, " ") + "]"
 			pages_str := fmt.Sprintf("%d 0 obj\r<<\r/Type /Pages\r/Kids %s\r/Count %d\r>>\rendobj\r", tpon, kids_str, count_dict[tpon])
-			pdfData = append(pdfData, []byte(pages_str)...)
+
+			writer.Write([]byte(pages_str))
 		}
 	}
 
 	// add EOF mark
-	pdfData = append(pdfData, []byte("\n%%EOF\r")...)
+	writer.Write([]byte("\n%%EOF\r"))
 
-	return pdfData
+	return nil
 }

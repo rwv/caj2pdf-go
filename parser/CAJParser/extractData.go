@@ -38,19 +38,15 @@ func extractData(file io.ReadSeeker, output io.Writer) error {
 
 	pdfLength := pdf_end - pdf_start_value
 
-	file.Seek(pdf_start_value, io.SeekStart)
-
+	// Write PDF Header
 	pdfHeader := []byte("%PDF-1.3\r\n")
-	pdfBody := make([]byte, pdfLength)
-
-	_, err = file.Read(pdfBody)
-	if err != nil {
-		return err
-	}
-	pdfFooter := []byte("\r\n")
-
 	output.Write(pdfHeader)
-	output.Write(pdfBody)
+
+	// Write PDF Body
+	file.Seek(pdf_start_value, io.SeekStart)
+	io.CopyN(output, file, pdfLength)
+
+	pdfFooter := []byte("\r\n")
 	output.Write(pdfFooter)
 
 	return nil

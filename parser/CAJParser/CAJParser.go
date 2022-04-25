@@ -34,9 +34,13 @@ func (parser CAJParser) Convert(target string) error {
 	}
 	defer file.Close()
 
-	pdfData, err := extractData(file)
+	writer := bytes.NewBuffer([]byte{})
 
-	pdfData, err = handlePages(bytes.NewReader(pdfData), &parser)
+	err = extractData(file, writer)
+
+	extractedReader := bytes.NewReader(writer.Bytes())
+
+	pdfData, err := handlePages(extractedReader, &parser)
 
 	// write pdfData to File
 	file, err = os.CreateTemp("", "caj2pdf")

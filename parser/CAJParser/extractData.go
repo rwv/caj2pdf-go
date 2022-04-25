@@ -7,7 +7,7 @@ import (
 
 const _PAGE_NUMBER_OFFSET int64 = 0x10
 
-func extractData(file io.ReadSeeker) ([]byte, error) {
+func extractData(file io.ReadSeeker, output io.Writer) error {
 	var err error
 
 	startOffset := _PAGE_NUMBER_OFFSET + 4
@@ -18,7 +18,7 @@ func extractData(file io.ReadSeeker) ([]byte, error) {
 
 	_, err = file.Read(pdfStartPointerSlice)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	pdfStartPointer := int64(int32(binary.LittleEndian.Uint32(pdfStartPointerSlice)))
@@ -27,7 +27,7 @@ func extractData(file io.ReadSeeker) ([]byte, error) {
 	var pdf_start []byte = make([]byte, 4)
 	_, err = file.Read(pdf_start)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	pdf_start_value := int64(binary.LittleEndian.Uint32(pdf_start))
@@ -45,13 +45,13 @@ func extractData(file io.ReadSeeker) ([]byte, error) {
 
 	_, err = file.Read(pdfBody)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	pdfFooter := []byte("\r\n")
 
-	// Concat
-	pdfData := append(pdfHeader, pdfBody...)
-	pdfData = append(pdfData, pdfFooter...)
+	output.Write(pdfHeader)
+	output.Write(pdfBody)
+	output.Write(pdfFooter)
 
-	return pdfData, nil
+	return nil
 }

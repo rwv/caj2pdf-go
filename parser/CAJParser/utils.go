@@ -5,6 +5,15 @@ import (
 	"io"
 )
 
+func contains[K comparable](s []K, e K) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 func findAllOccurances(file io.ReadSeeker, pattern []byte) []int64 {
 	var results []int64
 	var last_address int64 = int64(-len(pattern))

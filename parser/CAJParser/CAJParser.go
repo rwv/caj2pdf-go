@@ -2,7 +2,6 @@ package CAJParser
 
 import (
 	"bytes"
-	"io"
 	"os"
 )
 
@@ -35,29 +34,16 @@ func (parser CAJParser) Convert(target string) error {
 	}
 	defer file.Close()
 
-	writer := bytes.NewBuffer([]byte{})
-
+	writer := new(bytes.Buffer)
 	err = extractData(file, writer)
 
 	extractedReader := bytes.NewReader(writer.Bytes())
+	writer = new(bytes.Buffer)
+	handlePages(extractedReader, writer, &parser)
 
-	handledWriter := bytes.NewBuffer([]byte{})
-
-	_ = handlePages(extractedReader, handledWriter, &parser)
-
-	// pdfData := handledWriter.Bytes()
-
-	// write pdfData to File
-	file, err = os.CreateTemp("", "caj2pdf")
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = io.Copy(file, handledWriter)
-
-	file.Close()
-
-	repairXref(file.Name(), target)
+	reader := bytes.NewReader(writer.Bytes())
+	writer = new(bytes.Buffer)
+	repairXref(reader, writer)
 
 	return nil
 }

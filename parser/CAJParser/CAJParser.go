@@ -4,7 +4,6 @@ import (
 	"os"
 )
 
-const caj_PAGE_NUMBER_OFFSET = 0x10
 const caj_TOC_NUMBER_OFFSET = 0x110
 
 type CAJParser struct {

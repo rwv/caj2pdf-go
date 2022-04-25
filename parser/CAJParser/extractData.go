@@ -5,10 +5,12 @@ import (
 	"io"
 )
 
+const _PAGE_NUMBER_OFFSET int64 = 0x10
+
 func extractData(file io.ReadSeeker) ([]byte, error) {
 	var err error
 
-	var startOffset int64 = caj_PAGE_NUMBER_OFFSET + 4
+	startOffset := _PAGE_NUMBER_OFFSET + 4
 	file.Seek(startOffset, io.SeekStart)
 
 	// Seek to PDF start pointer

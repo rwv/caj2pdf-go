@@ -6,7 +6,7 @@ import (
 )
 
 func getPageNum(file io.ReadSeeker) int32 {
-	file.Seek(caj_PAGE_NUMBER_OFFSET, io.SeekStart)
+	file.Seek(_PAGE_NUMBER_OFFSET, io.SeekStart)
 
 	var pageSlice []byte = make([]byte, 4)
 	_, err := file.Read(pageSlice)

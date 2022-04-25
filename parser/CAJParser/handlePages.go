@@ -10,8 +10,6 @@ import (
 // get pages_obj_no list containing distinct elements
 // & find missing pages object(s) -- top pages object(s) in pages_obj_no
 func handlePages(reader io.ReadSeeker, writer io.Writer, parser *CAJParser) error {
-	pdfData, _ := io.ReadAll(reader)
-
 	obj_no := dealDisordered(reader)
 	inds := addCatalog(reader)
 
@@ -68,7 +66,8 @@ func handlePages(reader io.ReadSeeker, writer io.Writer, parser *CAJParser) erro
 
 	catalog := []byte(fmt.Sprintf("%d 0 obj\r<</Type /Catalog\r/Pages %d 0 R\r>>\rendobj\r", catalog_obj_no, root_pages_obj_no))
 
-	writer.Write(pdfData)
+	reader.Seek(0, io.SeekStart)
+	io.Copy(writer, reader)
 	writer.Write(catalog)
 
 	_ = addPagesObjAndEOFMark(reader, writer, single_pages_obj_missed, multi_pages_obj_missed, top_pages_obj_no, root_pages_obj_no, parser.pageNum)

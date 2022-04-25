@@ -131,9 +131,9 @@ func findReverse(file io.ReadSeeker, pattern []byte, end int64) int64 {
 func findUnusedNo(numberList []int64, numberList2 []int64) int64 {
 	var unuse_no int64 = -1
 
-	const maxTimes = 99999
-	for i := int64(0); i < maxTimes; i++ {
-		temp := maxTimes - i
+	const maxNo = 99999
+	for i := int64(0); i < maxNo; i++ {
+		temp := maxNo - i
 		if !contains(numberList, temp) && !contains(numberList2, temp) {
 			unuse_no = temp
 			break

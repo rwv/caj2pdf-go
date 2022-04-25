@@ -2,6 +2,7 @@ package CAJParser
 
 import (
 	"bytes"
+	"io"
 	"os"
 )
 
@@ -34,6 +35,8 @@ func (parser CAJParser) Convert(target string) error {
 	}
 	defer file.Close()
 
+	toc := getToc(file)
+
 	writer := new(bytes.Buffer)
 	err = extractData(file, writer)
 
@@ -44,6 +47,18 @@ func (parser CAJParser) Convert(target string) error {
 	reader := bytes.NewReader(writer.Bytes())
 	writer = new(bytes.Buffer)
 	repairXref(reader, writer)
+
+	reader = bytes.NewReader(writer.Bytes())
+	writer = new(bytes.Buffer)
+	addOutlines(reader, writer, toc)
+
+	reader = bytes.NewReader(writer.Bytes())
+	file1, err := os.Create(target)
+	if err != nil {
+		panic(err)
+	}
+	defer file1.Close()
+	io.Copy(file1, reader)
 
 	return nil
 }
